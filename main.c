@@ -21,10 +21,10 @@ void player_input();
 
 void game_startup()
 {
-
    textures[TEXTURE_TILEMAP] = LoadTexture("assets/Tilemap/tilemap_packed.png");
    textures[TEXTURE_PLAYER] = LoadTexture("assets/ufo.png");
    textures[TEXTURE_BACKGROUND] = LoadTexture("assets/background1.png");
+   textures[TEXTURE_INFBACKGROUND] = LoadTexture("assets/endless-background.png");
 
    camera.target = (Vector2){player.position.x, player.position.y - 180};
    camera.offset = (Vector2){(float)screen_width / 2, (float)screen_height / 2};
@@ -34,7 +34,6 @@ void game_startup()
 
 void world_generate()
 {
-
    for (int x = 0; x < WORLD_WIDTH; x++)
    {
       world[WORLD_HEIGHT - 2][x].type = TILE_TYPE_FLOOR;
@@ -48,10 +47,18 @@ void world_generate()
 void game_update()
 {
    player_input();
+   
+   scrolling_bg_y += scroll_speed * GetFrameTime();
+
+   if (scrolling_bg_y >= textures[TEXTURE_INFBACKGROUND].height) {
+      scrolling_bg_y = 0;
+   }
 }
 
 void game_render()
 {
+   DrawTexture(textures[TEXTURE_INFBACKGROUND], 0, (int)scrolling_bg_y, WHITE);
+   DrawTexture(textures[TEXTURE_INFBACKGROUND], 0, (int)scrolling_bg_y - textures[TEXTURE_INFBACKGROUND].height, WHITE);
 
    BeginMode2D(camera);
 
@@ -75,6 +82,8 @@ void game_render()
       }
    }
 
+   EndMode2D();
+
    // Draw floor
 }
 
@@ -97,6 +106,7 @@ void player_input()
    player.velocity.x += acceleration;
    player.position.x += player.velocity.x;
    player.position.y += player.velocity.y;
+   camera.offset.y -= player.velocity.y;
 }
 
 void game_shutdown()

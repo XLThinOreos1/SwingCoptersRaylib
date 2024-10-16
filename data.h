@@ -7,14 +7,16 @@
 #define TILE_HEIGHT 18
 #define WORLD_WIDTH 22
 #define WORLD_HEIGHT 33
-#define MAX_TEXTURES 3
+#define MAX_TEXTURES 4
 #define TILESET_WIDTH 16
 
 const int screen_width = 400;
 const int screen_height = 600;
+const float scroll_speed = 100.f;
 
 int score; // lägg till score system senare
 float acceleration = 0.15f;
+float scrolling_bg_y = 0.0f;
 
 typedef enum {
    TILE_TYPE_EMPTY = 0,
@@ -41,7 +43,8 @@ typedef struct {
 typedef enum {
    TEXTURE_TILEMAP = 0,
    TEXTURE_PLAYER,
-   TEXTURE_BACKGROUND
+   TEXTURE_BACKGROUND,
+   TEXTURE_INFBACKGROUND
 } texture_asset;
 
 #endif
