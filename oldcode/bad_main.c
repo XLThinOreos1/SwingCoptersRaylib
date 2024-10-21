@@ -2,24 +2,25 @@
 
 #include <raylib.h>
 #include <raymath.h>
-#include "data.h"
+#include "bad_data.h"
 
 Texture2D textures[MAX_TEXTURES];
 s_tile world[WORLD_HEIGHT][WORLD_WIDTH];
 Camera2D camera = {0};
+s_pipe pipes[10];
 s_player player = {
     .position = {200, 500},
     .velocity = {0, -2},
     .move_speed = 200};
 
-void game_startup();
-void game_update();
-void game_render();
+void GameStartup();
+void GameUpdate();
+void GameRender();
 void game_shutdown();
 void draw_tile(int pos_x, int pos_y, int texture_index_x, int texture_index_y);
-void player_input();
+void PlayerInput();
 
-void game_startup()
+void GameStartup()
 {
    textures[TEXTURE_TILEMAP] = LoadTexture("assets/Tilemap/tilemap_packed.png");
    textures[TEXTURE_PLAYER] = LoadTexture("assets/ufo.png");
@@ -27,7 +28,7 @@ void game_startup()
    textures[TEXTURE_INFBACKGROUND] = LoadTexture("assets/endless-background.png");
 
    camera.target = (Vector2){player.position.x, player.position.y - 180};
-   camera.offset = (Vector2){(float)screen_width / 2, (float)screen_height / 2};
+   camera.offset = (Vector2){(float)screenWidth / 2, (float)screenHeight / 2};
    camera.rotation = 0.0f;
    camera.zoom = 1.1f;
 }
@@ -43,22 +44,30 @@ void world_generate()
    {
       world[WORLD_HEIGHT - 1][x].type = TILE_TYPE_DIRT;
    }
-}
-void game_update()
-{
-   player_input();
-   
-   scrolling_bg_y += scroll_speed * GetFrameTime();
 
-   if (scrolling_bg_y >= textures[TEXTURE_INFBACKGROUND].height) {
-      scrolling_bg_y = 0;
+   for (int i = 0; i < 10; i++)
+   {
+      float random_height = GetPipeRandomHeight();
+      pipes[i].position = (Vector2){i * 400.0f + 800.0f, random_height};
+      pipes[i].collision_top = (Rectangle){pipes[i].position.x - 64.0f, pipes[i].position.y - 868.0f, 128.0f, 768.0f};
+   }
+}
+void GameUpdate()
+{
+   PlayerInput();
+
+   scrollingBG_y += scrollSpeed * GetFrameTime();
+
+   if (scrollingBG_y >= textures[TEXTURE_INFBACKGROUND].height)
+   {
+      scrollingBG_y = 0;
    }
 }
 
-void game_render()
+void GameRender()
 {
-   DrawTexture(textures[TEXTURE_INFBACKGROUND], 0, (int)scrolling_bg_y, WHITE);
-   DrawTexture(textures[TEXTURE_INFBACKGROUND], 0, (int)scrolling_bg_y - textures[TEXTURE_INFBACKGROUND].height, WHITE);
+   DrawTexture(textures[TEXTURE_INFBACKGROUND], 0, (int)scrollingBG_y, WHITE);
+   DrawTexture(textures[TEXTURE_INFBACKGROUND], 0, (int)scrollingBG_y - textures[TEXTURE_INFBACKGROUND].height, WHITE);
 
    BeginMode2D(camera);
 
@@ -82,6 +91,11 @@ void game_render()
       }
    }
 
+   for (int i = 0; i < 10; i++)
+   {
+      // world[y][x].type == 3 draw_tile(x * TILE_WIDTH, y * TILE_HEIGHT, texture_index_x, texture_index_y);
+   }
+
    EndMode2D();
 
    // Draw floor
@@ -95,7 +109,7 @@ void draw_tile(int pos_x, int pos_y, int texture_index_x, int texture_index_y)
    DrawTexturePro(textures[TEXTURE_TILEMAP], source, dest, origin, 0.0f, WHITE);
 }
 
-void player_input()
+void PlayerInput()
 {
    if (IsKeyPressed(KEY_SPACE))
    {
@@ -117,21 +131,21 @@ void game_shutdown()
    }
 }
 
-int main()
+int Main()
 {
-   InitWindow(screen_width, screen_height, "Swing Copter");
+   InitWindow(screenWidth, screenHeight, "Swing Copter");
    SetTargetFPS(60);
 
-   game_startup();
+   GameStartup();
    world_generate();
 
    while (!WindowShouldClose())
    {
-      game_update();
+      GameUpdate();
 
       BeginDrawing();
       ClearBackground(BLACK);
-      game_render();
+      GameRender();
       EndDrawing();
    }
 
