@@ -7,8 +7,8 @@
 #define WORLD_WIDTH 22
 #define WORLD_HEIGHT 33
 
-const int screenWidth = 400;
-const int screenHeight = 600;
+const int screenWidth = 1000;  // 400
+const int screenHeight = 1000; // 600
 const float scrollSpeed = 100.0f;
 
 float flashTime = 0.2f;
@@ -32,8 +32,14 @@ typedef struct
 typedef struct
 {
    Vector2 position;
-   Rectangle collision_top;
-   Rectangle collision_bottom;
+   Rectangle collisionLeft;
+   Rectangle collisionRight;
 } sPipe;
+
+sPlayer player = {
+    .position = {200, 500},
+    .velocity = {0, -2},
+    .moveSpeed = 200,
+    .isAlive = true};
 
 #endif

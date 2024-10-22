@@ -1,44 +1,24 @@
 #include <raylib.h>
 #include <raymath.h>
 #include <stdio.h>
-#include "dataNEW.h"
+#include "data.h"
+#include "terrain.c"
 
-Texture2D bgTexture, bgTextureInf, pipeHorizontalT, pipeLeftT, pipeRightT, playerTexture, floorT, dirtT;
 Camera2D camera = {0};
-sPipe pipes[10];
-sPlayer player = {
-    .position = {200, 500},
-    .velocity = {0, -2},
-    .moveSpeed = 200,
-    .isAlive = true};
 
-void CollisionCheck();
-void GameStartup();
-void GameUpdate();
-void GameRender();
-void PlayerInput();
-void DrawImpact();
-void UpdateImpactFlash();
+void CollisionCheck(void);
+void GameStartup(void);
+void GameUpdate(void);
+void GameRender(void);
+void PlayerInput(void);
+void DrawImpact(void);
+void UpdateImpactFlash(void);
 
-void GameStartup()
+void GameStartup(void)
 {
-    Image bgImage = LoadImage("assets/background.png");
-    Image bgImageInf = LoadImage("assets/endless-background.png");
-    Image playerSprite = LoadImage("assets/ufo.png");
-    Image pipeHorizontal = LoadImage("assets/Tiles/tile_0109.png");
-    Image pipeLeft = LoadImage("assets/Tiles/tile_0111.png");
-    Image pipeRight = LoadImage("assets/Tiles/tile_0108.png");
-    Image floor = LoadImage("assets/Tiles/tile_0018.png");
-    Image dirt = LoadImage("assets/Tiles/tile_0034.png");
+    InitTextures();
 
-    bgTexture = LoadTextureFromImage(bgImage);
-    bgTextureInf = LoadTextureFromImage(bgImageInf);
-    playerTexture = LoadTextureFromImage(playerSprite);
-    pipeHorizontalT = LoadTextureFromImage(pipeHorizontal);
-    pipeLeftT = LoadTextureFromImage(pipeLeft);
-    pipeRightT = LoadTextureFromImage(pipeRight);
-    floorT = LoadTextureFromImage(floor);
-    dirtT = LoadTextureFromImage(dirt);
+    InitTerrain();
 
     camera.target = (Vector2){player.position.x, player.position.y - 150};
     camera.offset = (Vector2){(float)screenWidth / 2, (float)screenHeight / 2};
@@ -46,8 +26,11 @@ void GameStartup()
     camera.zoom = 1.2f;
 }
 
-void GameUpdate()
+void GameUpdate(void)
 {
+    float dT = GetFrameTime();
+    TerrainUpdate(dT);
+
     CollisionCheck();
 
     if (player.isAlive)
@@ -64,7 +47,7 @@ void GameUpdate()
     UpdateImpactFlash();
 }
 
-void GameRender()
+void GameRender(void)
 {
     BeginDrawing();
 
@@ -77,6 +60,8 @@ void GameRender()
     DrawTexture(bgTexture, 0, 0, WHITE);
     DrawTexture(playerTexture, player.position.x, player.position.y, WHITE);
 
+    DrawTerrain();
+
     EndMode2D();
 
     if (flashActive)
@@ -87,7 +72,7 @@ void GameRender()
     EndDrawing();
 }
 
-void PlayerInput()
+void PlayerInput(void)
 {
     if (IsKeyPressed(KEY_SPACE))
     {
@@ -101,7 +86,7 @@ void PlayerInput()
     camera.target.y += player.velocity.y;
 }
 
-void CollisionCheck()
+void CollisionCheck(void)
 {
     if (player.position.x < 0) // LEFT
     {
@@ -124,33 +109,60 @@ void CollisionCheck()
     }
 }
 
-void UpdateImpactFlash()
+void UpdateImpactFlash(void)
 {
     if (flashActive)
     {
-        currentFlashTime += GetFrameTime(); // Update time elapsed for flash
+        currentFlashTime += GetFrameTime();
 
-        if (currentFlashTime <= flashTime) // Initial flash phase
+        if (currentFlashTime <= flashTime)
         {
-            alpha = 0.9f; // Full opacity
+            alpha = 0.9f;
         }
-        else if (currentFlashTime <= (flashTime + fadeTime)) // Fade-out phase
+        else if (currentFlashTime <= (flashTime + fadeTime))
         {
-            // Decrease opacity over time for the fade effect
             alpha = 0.9f - (currentFlashTime - flashTime) / fadeTime;
         }
         else
         {
-            // Flash is over, reset state
             flashActive = false;
             alpha = 0.0f;
         }
     }
 }
 
-void DrawImpact()
+void DrawImpact(void)
 {
     DrawRectangle(0, 0, screenWidth, screenHeight, Fade(WHITE, alpha));
+}
+
+int LoadHighScore(void)
+{
+    char filename[25] = "highscore.txt";
+    FILE *f = fopen(filename, "r");
+
+    if (f == NULL)
+    {
+        return 0;
+    }
+
+    int highscore;
+    fscanf(f, "%d", &highscore);
+    fclose(f);
+
+    return highscore;
+}
+
+void SaveHighScore(int score)
+{
+    char filename[25] = "highscore.txt";
+    FILE *f = fopen(filename, "w");
+
+    if (f != NULL)
+    {
+        fprintf(f, "%d", score);
+        fclose(f);
+    }
 }
 
 int main()
