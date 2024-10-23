@@ -13,12 +13,14 @@ void GameRender(void);
 void PlayerInput(void);
 void DrawImpact(void);
 void UpdateImpactFlash(void);
+void ResetGame(void);
 
 void GameStartup(void)
 {
     InitTextures();
-
     InitTerrain();
+
+    player.collider = (Rectangle){player.position.x, player.position.y};
 
     camera.target = (Vector2){player.position.x, player.position.y - 150};
     camera.offset = (Vector2){(float)screenWidth / 2, (float)screenHeight / 2};
@@ -30,7 +32,6 @@ void GameUpdate(void)
 {
     float dT = GetFrameTime();
     TerrainUpdate(dT);
-
     CollisionCheck();
 
     if (player.isAlive)
@@ -45,6 +46,14 @@ void GameUpdate(void)
     }
 
     UpdateImpactFlash();
+
+    if (!player.isAlive)
+    {
+        if (IsKeyPressed(KEY_ENTER))
+        {
+            ResetGame();
+        }
+    }
 }
 
 void GameRender(void)
@@ -59,14 +68,21 @@ void GameRender(void)
 
     DrawTexture(bgTexture, 0, 0, WHITE);
     DrawTexture(playerTexture, player.position.x, player.position.y, WHITE);
+    // DEBUG
+    DrawRectangle(player.collider.x, player.collider.y, playerTexture.width, playerTexture.height, RED);
 
-    DrawTerrain();
+    DrawPipes();
 
     EndMode2D();
 
     if (flashActive)
     {
         DrawImpact();
+    }
+
+    if (!player.isAlive)
+    {
+        DrawText("GAME OVER", 200, 500, 30, RED);
     }
 
     EndDrawing();
@@ -83,14 +99,16 @@ void PlayerInput(void)
     player.velocity.x += acceleration;
     player.position.x += player.velocity.x;
     player.position.y += player.velocity.y;
+    player.collider.x = player.position.x;
+    player.collider.y = player.position.y;
     camera.target.y += player.velocity.y;
 }
 
 void CollisionCheck(void)
 {
-    if (player.position.x < 0) // LEFT
+    if (player.collider.x < 0) // LEFT
     {
-        player.position.x = 0;
+        player.collider.x = 0;
 
         player.isAlive = false;
         flashActive = true;
@@ -98,14 +116,32 @@ void CollisionCheck(void)
         alpha = 0.9f;
     }
 
-    if (player.position.x > (screenWidth - 50)) // RIGHT
+    if (player.collider.x > (screenWidth - 50)) // RIGHT
     {
-        player.position.x = screenWidth - 51;
+        player.collider.x = screenWidth - 51;
 
         player.isAlive = false;
         flashActive = true;
         currentFlashTime = 0.0f;
         alpha = 0.9f;
+    }
+
+    for (int i = 0; i < 1; i++)
+    {
+        Rectangle r1 = player.collider;
+        Rectangle r2 = pipes[i].collision;
+
+        if (player.isAlive)
+        {
+            if (CheckCollisionRecs(r1, r2))
+            {
+                player.isAlive = false;
+                flashActive = true;
+                currentFlashTime = 0.0f;
+                alpha = 0.9f;
+                break;
+            }
+        }
     }
 }
 
@@ -134,6 +170,16 @@ void UpdateImpactFlash(void)
 void DrawImpact(void)
 {
     DrawRectangle(0, 0, screenWidth, screenHeight, Fade(WHITE, alpha));
+}
+
+void ResetGame(void)
+{
+    TerrainReset();
+    player.position.x = 200.0f;
+    player.collider = (Rectangle){player.position.x, player.position.y, playerTexture.width, playerTexture.height};
+
+    player.velocity.x = 0;
+    player.isAlive = true;
 }
 
 int LoadHighScore(void)
